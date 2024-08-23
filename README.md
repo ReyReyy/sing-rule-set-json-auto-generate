@@ -7,9 +7,10 @@ As we all know, sing-box has a very useful feature - rule_set, which can bring y
 ## Requirements
 Systems:
 - Debian / Ubuntu
-- CentOS / Fedora
+- CentOS
+- Fedora
 - Arch Linux
-- Maybe other similar distributions
+- Maybe other similar systems 
 
 Packages:
 - Python
