@@ -223,5 +223,5 @@ case "$1" in
 esac
 
 # Automatically delete the script after execution
-#SCRIPT_PATH="$(realpath "$0")"
-#rm -f "$SCRIPT_PATH"
+SCRIPT_PATH="$(realpath "$0")"
+rm -f "$SCRIPT_PATH"
