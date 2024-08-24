@@ -44,8 +44,6 @@ install_packages() {
                     sudo pacman -Sy --noconfirm "$package"
                     ;;
             esac
-        else
-            echo "$package 已安装。"
         fi
     done
 }
