@@ -1,3 +1,5 @@
+[English](https://github.com/ReyReyy/sing-rule-set-json-auto-generate/blob/main/README.md) | 中文
+
 # sing-box 规则集本地化脚本
 自动生成包含所有 sing-box 规则集的 rule_set.json 文件
 

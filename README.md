@@ -1,3 +1,5 @@
+English | [中文](https://github.com/ReyReyy/sing-rule-set-json-auto-generate/blob/main/README_CN.md)
+
 # sing-box rule_sets localization
 Automatically generate rule_set.json including all sing-box rule sets
 
