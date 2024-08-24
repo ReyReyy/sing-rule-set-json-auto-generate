@@ -1,5 +1,5 @@
 # sing-box rule_sets localization
-Automatically write all sing-box rule sets into json files
+Automatically generate rule_set.json including all sing-box rule sets
 
 ## About
 As we all know, sing-box has a very useful feature - rule_set, which can bring you a lot of interesting ways to play, but it's not like xray's geoip geosite that downloads all rules locally for easy rule writing. The purpose of this script is to break this situation, so that sing-box can also be like xray, just a few simple steps to realize geo diversion without specifying a separate rule_set
@@ -27,11 +27,11 @@ bash <(curl -L -s ruleset.reyreyy.net) [SUBCOMMAND]
 menu               Open menu.
 generate           One-time generate, no additional changes.
 install            Install the script, automatic update rule_set.json.
-uninstall          Uninstall all the changes, including rule_set.json & geo files.
+uninstall          Uninstall all the changes, including script, rule_set.json and geo files.
 ```
 
 ## Example
-Install automaticlly write & update rule sets everyday.
+Install automaticlly, write & update rule sets everyday.
 ```
 bash <(curl -L -s ruleset.reyreyy.net) install
 ```

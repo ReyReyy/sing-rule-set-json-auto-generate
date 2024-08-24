@@ -1,5 +1,5 @@
 # sing-box 规则集本地化脚本
-自动生成包含所有sing-box规则集的rule_set.json文件
+自动生成包含所有 sing-box 规则集的 rule_set.json 文件
 
 ## 关于
 众所周知，sing-box 有一个非常强大的功能 —— rule_set（规则集），它给我们带来很多有趣的玩法，但它不像 xray 的 geoip geosite 一样，把 dat 文件下载到本地，便于规则的书写/更改。这个脚本的目的就是为了改变这一状况，让 sing-box 也能像 xray 那样，只需简单几步便可轻松书写内建 geo 规则而不用额外写入规则集。
