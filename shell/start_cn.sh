@@ -130,8 +130,8 @@ uninstall_script() {
 
     # 删除其他相关文件和目录
     sudo rm -f /etc/sing-box/rule_set.json
-    sudo rm -rf /etc/sing-box/geosite/
-    sudo rm -rf /etc/sing-box/geoip/
+    sudo rm -rf /etc/sing-box/sing-geosite/
+    sudo rm -rf /etc/sing-box/sing-geoip/
 
     echo "卸载完成。"
 }
