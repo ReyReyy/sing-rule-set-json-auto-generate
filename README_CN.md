@@ -21,7 +21,7 @@
 
 ## 如何使用
 ```
-bash <(curl -L -s ruleset.reyreyy.net) [额外参数]
+bash <(curl -L -s ruleset.reyreyy.net/cn) [额外参数]
 ```
 
 ## 额外参数
@@ -35,11 +35,11 @@ uninstall          卸载脚本，包括已安装的脚本、rule_set.json 和 g
 ## 例如
 自动下载并写入规则集至 rule_set.json 并每日更新规则。
 ```
-bash <(curl -L -s ruleset.reyreyy.net) install
+bash <(curl -L -s ruleset.reyreyy.net/cn) install
 ```
 打开菜单选择你想做的事情。
 ```
-bash <(curl -L -s ruleset.reyreyy.net) menu
+bash <(curl -L -s ruleset.reyreyy.net/cn) menu
 ```
 
 ## 安装了，然后呢？
