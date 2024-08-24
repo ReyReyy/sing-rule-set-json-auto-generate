@@ -1,6 +1,11 @@
 #!/bin/bash
 
-# 函数：检查软件包是否已安装
+# ANSI 颜色
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+# 函数：检查包是否已安装
 is_package_installed() {
     local package=$1
     case "$OS" in
@@ -14,7 +19,7 @@ is_package_installed() {
             pacman -Q "$package" >/dev/null 2>&1
             ;;
         *)
-            echo "不支持的操作系统：$OS"
+            echo -e "${RED}不支持的操作系统:${NC} $OS"
             exit 1
             ;;
     esac
@@ -27,7 +32,7 @@ install_packages() {
     # 检查并安装缺失的软件包
     for package in "${packages[@]}"; do
         if ! is_package_installed "$package"; then
-            echo "$package 未安装，正在安装..."
+            echo "$package 未安装。正在安装..."
             case "$OS" in
                 ubuntu|debian)
                     sudo apt-get update
@@ -51,7 +56,7 @@ install_packages() {
 # 函数：检查是否安装了 sing-box
 check_sing_box_installed() {
     if ! command -v sing-box &>/dev/null; then
-        echo "未检测到 sing-box，请先安装 sing-box。"
+        echo -e "${RED}未安装 sing-box，请先安装 sing-box。${NC}"
         exit 1
     fi
 }
@@ -59,7 +64,7 @@ check_sing_box_installed() {
 # 函数：检查脚本是否已安装
 check_script_installed() {
     if [ ! -d "/etc/sing-box/auto_update" ]; then
-        echo "未检测到脚本，无需卸载。"
+        echo -e "${RED}脚本未安装，无需卸载。${NC}"
         exit 1
     fi
 }
@@ -75,11 +80,11 @@ generate_rule_set() {
 
     wget "$SCRIPT_URL" -O "$SCRIPT_PATH"
     if [ $? -ne 0 ]; then
-        echo "下载 generate_rule_set.py 失败"
+        echo -e "${RED}下载 generate_rule_set.py 失败${NC}"
         exit 1
     fi
 
-    # 给予脚本执行权限
+    # 授予脚本执行权限
     chmod +x "$SCRIPT_PATH"
 
     # 运行脚本
@@ -87,11 +92,10 @@ generate_rule_set() {
     RUN_STATUS=$?
 
     if [ $RUN_STATUS -ne 0 ]; then
-        echo "运行 generate_rule_set.py 时发生错误，退出状态：$RUN_STATUS"
+        echo -e "${RED}运行 generate_rule_set.py 时出错，退出状态:${NC} $RUN_STATUS"
         exit $RUN_STATUS
     fi
 
-    echo "生成完成。"
 }
 
 # 函数：安装脚本并设置自动更新
@@ -100,7 +104,7 @@ install_script() {
 
     # 如果脚本已安装，提示用户
     if [ -d "$AUTO_UPDATE_DIR" ]; then
-        echo "脚本已安装，无需再次安装。"
+        echo -e "${GREEN}脚本已安装，无需再次安装。${NC}"
         exit 1
     fi
 
@@ -108,24 +112,23 @@ install_script() {
     mkdir "$AUTO_UPDATE_DIR"
     sudo mv "$SCRIPT_PATH" "$AUTO_UPDATE_DIR/"
 
-    # 在 crontab 中添加每日更新任务
+    # 将每日更新任务添加到 crontab
     CRON_JOB="0 0 * * * /usr/bin/python3 $AUTO_UPDATE_DIR/generate_rule_set.py"
     (crontab -l 2>/dev/null; echo "$CRON_JOB") | crontab -
 
-    echo "安装完成。"
 }
 
-# 函数：卸载脚本并删除相关文件
+# 函数：卸载脚本并移除相关文件
 uninstall_script() {
     AUTO_UPDATE_DIR="/etc/sing-box/auto_update"
 
-    # 检查是否已安装脚本
+    # 检查脚本是否安装
     check_script_installed
 
-    # 删除脚本目录
+    # 移除脚本目录
     sudo rm -rf "$AUTO_UPDATE_DIR"
 
-    # 从 crontab 中删除任务
+    # 从 crontab 中移除任务
     crontab -l | grep -v "$AUTO_UPDATE_DIR/generate_rule_set.py" | crontab -
 
     # 删除其他相关文件和目录
@@ -133,94 +136,112 @@ uninstall_script() {
     sudo rm -rf /etc/sing-box/sing-geosite/
     sudo rm -rf /etc/sing-box/sing-geoip/
 
-    echo "卸载完成。"
 }
 
 # 函数：清理缓存文件
 cleanup_cache() {
     if [ -d "$TEMP_DIR" ]; then
         rm -rf "$TEMP_DIR"
-        # echo "临时文件已删除。"
     fi
+}
+
+# 函数：生成
+action_generate() {
+    check_sing_box_installed
+    generate_rule_set
+    cleanup_cache
+    echo -e "${GREEN}生成完成。${NC}"
+}
+
+# 函数：安装
+action_install() {
+    check_sing_box_installed
+    if [ -d "/etc/sing-box/auto_update" ]; then
+        echo -e "${RED}脚本已安装，无需再次安装。${NC}"
+    else
+        generate_rule_set
+        install_script
+        cleanup_cache
+        echo -e "${GREEN}安装完成。${NC}"
+    fi
+}
+
+# 函数：卸载
+action_uninstall() {
+    check_script_installed
+    uninstall_script
+    echo -e "${GREEN}卸载完成，相关文件已移除。${NC}"
 }
 
 # 函数：显示用户界面
 show_user_interface() {
-    echo "请选择要执行的操作："
+    # 检查脚本是否安装并显示状态
+    if [ ! -d "/etc/sing-box/auto_update" ]; then
+        echo -e "状态: ${RED}未安装${NC}"
+    else
+        echo -e "状态: ${GREEN}已安装${NC}"
+    fi
+
+    echo "请选择要执行的操作:"
     echo "1) 生成"
     echo "2) 安装"
     echo "3) 卸载"
-    read -rp "选择 (1, 2 或 3): " ACTION_CHOICE
+    read -rp "选择 (1, 2, 或 3): " ACTION_CHOICE
 
     case "$ACTION_CHOICE" in
         1)
-            check_sing_box_installed
-            generate_rule_set
-            cleanup_cache
+            action_generate
             ;;
         2)
-            check_sing_box_installed
-            if [ -d "/etc/sing-box/auto_update" ]; then
-                echo "脚本已安装，无需再次安装。"
-            else
-                generate_rule_set
-                install_script
-                cleanup_cache
-            fi
+            action_install
             ;;
         3)
-            check_script_installed
-            uninstall_script
+            action_uninstall
             ;;
         *)
-            echo "无效的选择，请选择 1, 2 或 3。"
+            echo -e "${RED}无效选择，请选择 1, 2, 或 3。${NC}"
             exit 1
             ;;
     esac
 }
+
+if [ "$EUID" -ne 0 ]; then
+  echo -e "${RED}请以 root 身份运行或使用 sudo。${NC}"
+  exit 1
+fi
 
 # 检测系统版本并选择包管理器
 if [ -f /etc/os-release ]; then
     . /etc/os-release
     OS=$ID
 else
-    echo "无法检测操作系统版本"
+    echo -e "${RED}无法检测操作系统版本${NC}"
     exit 1
 fi
 
-# 安装 git、python3 和 wget
+# 安装 git, python3 和 wget
 install_packages
 
 # 处理脚本参数
 case "$1" in
     g|generate)
-        check_sing_box_installed
-        generate_rule_set
-        cleanup_cache
+        action_generate
         ;;
     i|install)
-        check_sing_box_installed
-        if [ -d "/etc/sing-box/auto_update" ]; then
-            echo "脚本已安装，无需再次安装。"
-        else
-            generate_rule_set
-            install_script
-            cleanup_cache
-        fi
+        action_install
         ;;
     u|uninstall)
-        check_script_installed
-        uninstall_script
+        action_uninstall
         ;;
     m|menu|"")
         show_user_interface
         ;;
     *)
-        echo "无效的参数。"
+        echo -e "${RED}无效参数。${NC}"
         exit 1
         ;;
 esac
 
-# 脚本执行结束后自动删除脚本
+# 脚本执行结束后自动删除
 SCRIPT_PATH="$(realpath "$0")"
 rm -f "$SCRIPT_PATH"

@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# ANSI Color
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m'
+
 # Function: Check if a package is installed
 is_package_installed() {
     local package=$1
@@ -14,7 +19,7 @@ is_package_installed() {
             pacman -Q "$package" >/dev/null 2>&1
             ;;
         *)
-            echo "Unsupported operating system: $OS"
+            echo -e "${RED}Unsupported operating system:${NC} $OS"
             exit 1
             ;;
     esac
@@ -51,7 +56,7 @@ install_packages() {
 # Function: Check if sing-box is installed
 check_sing_box_installed() {
     if ! command -v sing-box &>/dev/null; then
-        echo "sing-box not detected, please install sing-box before proceeding."
+        echo -e "${RED}sing-box not installed, please install sing-box before proceeding.${NC}"
         exit 1
     fi
 }
@@ -59,7 +64,7 @@ check_sing_box_installed() {
 # Function: Check if the script is already installed
 check_script_installed() {
     if [ ! -d "/etc/sing-box/auto_update" ]; then
-        echo "Script not detected, no need to uninstall."
+        echo -e "${RED}Script not installed, no need to uninstall.${NC}"
         exit 1
     fi
 }
@@ -75,7 +80,7 @@ generate_rule_set() {
 
     wget "$SCRIPT_URL" -O "$SCRIPT_PATH"
     if [ $? -ne 0 ]; then
-        echo "Failed to download generate_rule_set.py"
+        echo -e "${RED}Failed to download generate_rule_set.py${NC}"
         exit 1
     fi
 
@@ -87,11 +92,10 @@ generate_rule_set() {
     RUN_STATUS=$?
 
     if [ $RUN_STATUS -ne 0 ]; then
-        echo "An error occurred while running generate_rule_set.py, exit status: $RUN_STATUS"
+        echo -e "${RED}An error occurred while running generate_rule_set.py, exit status:${NC} $RUN_STATUS"
         exit $RUN_STATUS
     fi
 
-    echo "Generation completed."
 }
 
 # Function: Install the script and set up auto-update
@@ -100,7 +104,7 @@ install_script() {
 
     # If the script is already installed, prompt the user
     if [ -d "$AUTO_UPDATE_DIR" ]; then
-        echo "Script is already installed, no need to install again."
+        echo -e "${GREEN}Script is already installed, no need to install again.${NC}"
         exit 1
     fi
 
@@ -112,7 +116,6 @@ install_script() {
     CRON_JOB="0 0 * * * /usr/bin/python3 $AUTO_UPDATE_DIR/generate_rule_set.py"
     (crontab -l 2>/dev/null; echo "$CRON_JOB") | crontab -
 
-    echo "Installation completed."
 }
 
 # Function: Uninstall the script and remove related files
@@ -133,7 +136,6 @@ uninstall_script() {
     sudo rm -rf /etc/sing-box/sing-geosite/
     sudo rm -rf /etc/sing-box/sing-geoip/
 
-    echo "Uninstallation completed, related files have been removed."
 }
 
 # Function: Clean up cache files
@@ -144,8 +146,43 @@ cleanup_cache() {
     fi
 }
 
+# Function: Generate
+action_generate() {
+    check_sing_box_installed
+    generate_rule_set
+    cleanup_cache
+    echo -e "${GREEN}Generation completed.${NC}"
+}
+
+# Function: Install
+action_install() {
+     check_sing_box_installed
+    if [ -d "/etc/sing-box/auto_update" ]; then
+        echo -e "${RED}Script is already installed, no need to install again.${NC}"
+    else
+        generate_rule_set
+        install_script
+        cleanup_cache
+        echo -e "${GREEN}Installation completed.${NC}"
+    fi
+}
+
+# Function: uninstall
+action_uninstall() {
+    check_script_installed
+    uninstall_script
+    echo -e "${GREEN}Uninstallation completed, related files have been removed.${NC}"
+}
+
 # Function: Display the user interface
 show_user_interface() {
+    # Check if script installed and show status
+    if [ ! -d "/etc/sing-box/auto_update" ]; then
+        echo -e "Status: ${RED}Not installed${NC}"
+    else
+        echo -e "Status: ${GREEN}Installed${NC}"
+    fi
+
     echo "Please select the operation to perform:"
     echo "1) Generate"
     echo "2) Install"
@@ -154,37 +191,32 @@ show_user_interface() {
 
     case "$ACTION_CHOICE" in
         1)
-            check_sing_box_installed
-            generate_rule_set
-            cleanup_cache
+            action_generate
             ;;
         2)
-            check_sing_box_installed
-            if [ -d "/etc/sing-box/auto_update" ]; then
-                echo "Script is already installed, no need to install again."
-            else
-                generate_rule_set
-                install_script
-                cleanup_cache
-            fi
+            action_install
             ;;
         3)
-            check_script_installed
-            uninstall_script
+            action_uninstall
             ;;
         *)
-            echo "Invalid selection, please choose 1, 2, or 3."
+            echo -e "${RED}Invalid selection, please choose 1, 2, or 3.${NC}"
             exit 1
             ;;
     esac
 }
+
+if [ "$EUID" -ne 0 ]; then
+  echo -e "${RED}Please run as root or use sudo.${NC}"
+  exit 1
+fi
 
 # Detect system version and select package manager
 if [ -f /etc/os-release ]; then
     . /etc/os-release
     OS=$ID
 else
-    echo "Unable to detect operating system version"
+    echo -e "${RED}Unable to detect operating system version${NC}"
     exit 1
 fi
 
@@ -194,29 +226,19 @@ install_packages
 # Handle script arguments
 case "$1" in
     g|generate)
-        check_sing_box_installed
-        generate_rule_set
-        cleanup_cache
+        action_generate
         ;;
     i|install)
-        check_sing_box_installed
-        if [ -d "/etc/sing-box/auto_update" ]; then
-            echo "Script is already installed, no need to install again."
-        else
-            generate_rule_set
-            install_script
-            cleanup_cache
-        fi
+        action_install
         ;;
     u|uninstall)
-        check_script_installed
-        uninstall_script
+        action_uninstall
         ;;
     m|menu|"")
         show_user_interface
         ;;
     *)
-        echo "Invalid parameter."
+        echo -e "${RED}Invalid parameter.${NC}"
         exit 1
         ;;
 esac
