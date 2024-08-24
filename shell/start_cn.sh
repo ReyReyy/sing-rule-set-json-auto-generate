@@ -105,6 +105,7 @@ install_script() {
     fi
 
     # 移动脚本到 auto_update 目录
+    mkdir "$AUTO_UPDATE_DIR"
     sudo mv "$SCRIPT_PATH" "$AUTO_UPDATE_DIR/"
 
     # 在 crontab 中添加每日更新任务

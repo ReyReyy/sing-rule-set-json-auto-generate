@@ -66,7 +66,6 @@ check_script_installed() {
 
 # Function: Generate the rule_set.json file
 generate_rule_set() {
-    # Use /tmp as the cache directory
     TEMP_DIR="/tmp/generate_rule_set_cache"
     mkdir -p "$TEMP_DIR"
 
